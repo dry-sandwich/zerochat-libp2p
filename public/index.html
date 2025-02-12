@@ -9,7 +9,7 @@
 <body>
 
 <div class="container">
-    <h2>Zero Chat <h5>(by DJ)</h5></h2>
+    <h2>Zero Chat (libp2p)</h2>
     <input type="text" id="roomInput" placeholder="Enter Room Name">
     <button onclick="joinRoom()">Join Room</button>
     <p id="status">🔴 Disconnected</p>
@@ -19,8 +19,13 @@
     <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
 </div>
 
-<!-- Load libp2p from CDN -->
-<script src="https://cdn.jsdelivr.net/npm/libp2p@latest/dist/index.min.js"></script>
+<!-- Load libp2p core and required modules separately -->
+<script src="https://cdn.jsdelivr.net/npm/@libp2p/core"></script>
+<script src="https://cdn.jsdelivr.net/npm/@libp2p/websockets"></script>
+<script src="https://cdn.jsdelivr.net/npm/@libp2p/noise"></script>
+<script src="https://cdn.jsdelivr.net/npm/@libp2p/mplex"></script>
+<script src="https://cdn.jsdelivr.net/npm/@libp2p/gossipsub"></script>
+
 <script src="script.js"></script>
 
 </body>
