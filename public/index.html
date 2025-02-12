@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero Chat (libp2p)</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+    <h2>Zero Chat <h5>(by DJ)</h5></h2>
+    <input type="text" id="roomInput" placeholder="Enter Room Name">
+    <button onclick="joinRoom()">Join Room</button>
+    <p id="status">🔴 Disconnected</p>
+
+    <div class="message-container" id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+</div>
+
+<!-- Load libp2p from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/libp2p@latest/dist/index.min.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
