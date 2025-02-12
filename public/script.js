@@ -1,34 +1,31 @@
-let node;
-let roomTopic = "p2p-chat-room";
-
 async function startLibp2p() {
-    console.log("[libp2p] Initializing (Without WebRTC)...");
+    console.log("[libp2p] Initializing...");
 
-    node = await libp2p.createLibp2p({
+    const { createLibp2p } = window.libp2p;
+    const { WebSockets } = window.libp2pWebsockets;
+    const { Noise } = window.libp2pNoise;
+    const { Mplex } = window.libp2pMplex;
+    const { GossipSub } = window.libp2pGossipsub;
+
+    window.node = await createLibp2p({
         addresses: {
-            listen: ["/dns4/shady-bizz-11.marvelmoonknight.workers.dev/tcp/443/wss"]
+            listen: ["/dns4/your-cloudflare-relay.workers.dev/tcp/443/wss"]
         },
-        transports: [
-            libp2p.WebSockets()
-        ],
-        connectionEncryption: [
-            libp2p.Noise()
-        ],
-        streamMuxers: [
-            libp2p.Mplex()
-        ],
-        pubsub: libp2p.GossipSub()
+        transports: [WebSockets()],
+        connectionEncryption: [Noise()],
+        streamMuxers: [Mplex()],
+        pubsub: GossipSub()
     });
 
-    await node.start();
-    console.log(`[libp2p] Node started with ID: ${node.peerId.toString()}`);
+    await window.node.start();
+    console.log(`[libp2p] Node started with ID: ${window.node.peerId.toString()}`);
 
-    node.pubsub.subscribe(roomTopic, (message) => {
+    window.node.pubsub.subscribe("p2p-chat-room", (message) => {
         const msg = new TextDecoder().decode(message.data);
         displayMessage(msg, false);
     });
 
-    node.addEventListener('peer:connect', (evt) => {
+    window.node.addEventListener('peer:connect', (evt) => {
         console.log(`[libp2p] Connected to peer: ${evt.detail}`);
     });
 
@@ -36,18 +33,13 @@ async function startLibp2p() {
 }
 
 function joinRoom() {
-    roomTopic = document.getElementById("roomInput").value;
-    if (!roomTopic) return alert("Enter a room name!");
-
-    console.log(`[libp2p] Joining room: ${roomTopic}`);
-    node.pubsub.subscribe(roomTopic);
+    console.log(`[libp2p] Joining room: p2p-chat-room`);
+    window.node.pubsub.subscribe("p2p-chat-room");
 }
 
 function sendMessage() {
-    if (!roomTopic) return alert("Join a room first!");
-
     const messageInput = document.getElementById("messageInput").value;
-    node.pubsub.publish(roomTopic, new TextEncoder().encode(messageInput));
+    window.node.pubsub.publish("p2p-chat-room", new TextEncoder().encode(messageInput));
     displayMessage(messageInput, true);
 }
 
