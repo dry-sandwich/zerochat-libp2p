@@ -1,74 +1,63 @@
-// Ensure libp2p is properly initialized and PubSub works
 let node;
 let roomTopic = "p2p-chat-room";
 
-// Function to initialize libp2p
 async function startLibp2p() {
-    try {
-        node = await window.libp2p.createLibp2p({
-            transports: [
-                new window.libp2p.WebSockets()
-            ],
-            connectionEncryption: [
-                new window.libp2p.Noise()
-            ],
-            streamMuxers: [
-                new window.libp2p.Mplex()
-            ],
-            pubsub: new window.libp2p.GossipSub() // Ensure PubSub is enabled
-        });
+    console.log("[libp2p] Initializing (Without WebRTC)...");
 
-        // Start the node
-        await node.start();
-        console.log(`[libp2p] Node started with ID: ${node.peerId.toString()}`);
+    node = await libp2p.createLibp2p({
+        addresses: {
+            listen: ["/dns4/shady-bizz-11.marvelmoonknight.workers.dev/tcp/443/wss/"]
+        },
+        transports: [
+            libp2p.WebSockets()
+        ],
+        connectionEncryption: [
+            libp2p.Noise()
+        ],
+        streamMuxers: [
+            libp2p.Mplex()
+        ],
+        pubsub: libp2p.GossipSub()
+    });
 
-        // Subscribe to the default chat room
-        await node.pubsub.subscribe(roomTopic);
-        console.log(`[libp2p] Subscribed to ${roomTopic}`);
+    await node.start();
+    console.log(`[libp2p] Node started with ID: ${node.peerId.toString()}`);
 
-        // Listen for messages
-        node.pubsub.addEventListener("message", (evt) => {
-            const msg = new TextDecoder().decode(evt.detail.data);
-            displayMessage(msg, false);
-        });
+    node.pubsub.subscribe(roomTopic, (message) => {
+        const msg = new TextDecoder().decode(message.data);
+        displayMessage(msg, false);
+    });
 
-    } catch (error) {
-        console.error("[libp2p] Error initializing libp2p:", error);
-    }
+    node.addEventListener('peer:connect', (evt) => {
+        console.log(`[libp2p] Connected to peer: ${evt.detail}`);
+    });
+
+    document.getElementById("sendBtn").disabled = false;
 }
 
-// Function to join a room
-async function joinRoom(roomName) {
-    if (!node || !node.pubsub) {
-        console.error("[libp2p] PubSub is not available. Make sure libp2p is running.");
-        return;
-    }
+function joinRoom() {
+    roomTopic = document.getElementById("roomInput").value;
+    if (!roomTopic) return alert("Enter a room name!");
 
-    console.log(`[libp2p] Joining room: ${roomName}`);
-    await node.pubsub.subscribe(roomName);
+    console.log(`[libp2p] Joining room: ${roomTopic}`);
+    node.pubsub.subscribe(roomTopic);
 }
 
-// Function to send a message
-async function sendMessage(message) {
-    if (!node || !node.pubsub) {
-        console.error("[libp2p] Cannot send message. PubSub is not available.");
-        return;
-    }
+function sendMessage() {
+    if (!roomTopic) return alert("Join a room first!");
 
-    const encodedMessage = new TextEncoder().encode(message);
-    await node.pubsub.publish(roomTopic, encodedMessage);
-    displayMessage(message, true);
+    const messageInput = document.getElementById("messageInput").value;
+    node.pubsub.publish(roomTopic, new TextEncoder().encode(messageInput));
+    displayMessage(messageInput, true);
 }
 
-// Function to display messages in the chat UI
-function displayMessage(message, isOwnMessage) {
-    const chatBox = document.getElementById("chat-box");
-    const messageElement = document.createElement("div");
-
-    messageElement.textContent = message;
-    messageElement.classList.add(isOwnMessage ? "my-message" : "their-message");
-    chatBox.appendChild(messageElement);
+function displayMessage(text, isLocal) {
+    const div = document.createElement("div");
+    div.className = "message " + (isLocal ? "local" : "remote");
+    div.textContent = text;
+    document.getElementById("messages").appendChild(div);
 }
 
-// Ensure the script only runs after the page loads
-document.addEventListener("DOMContentLoaded", startLibp2p);
+document.addEventListener("DOMContentLoaded", async () => {
+    await startLibp2p();
+});
