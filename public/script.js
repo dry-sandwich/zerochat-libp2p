@@ -6,7 +6,7 @@ async function startLibp2p() {
 
     node = await libp2p.createLibp2p({
         addresses: {
-            listen: ["/dns4/shady-bizz-11.marvelmoonknight.workers.dev/tcp/443/wss/"]
+            listen: ["/dns4/shady-bizz-11.marvelmoonknight.workers.dev/tcp/443/wss"]
         },
         transports: [
             libp2p.WebSockets()
