@@ -2,15 +2,16 @@ let node;
 let roomTopic;
 let username = `User${Math.floor(Math.random() * 1000)}`;
 
-// Initialize libp2p with proper component imports
 async function startLibp2p() {
     try {
         const { createLibp2p } = window.libp2p;
         const { noise } = window.Noise;
         const { mplex } = window.Mplex;
-        const { websockets } = window.WebSockets;
+        const websockets = window.WebSockets;
         const { bootstrap } = window.Bootstrap;
+        const { gossipsub } = window.GossipSub;
 
+        // Create libp2p node with proper pubsub configuration
         node = await createLibp2p({
             addresses: {
                 listen: ['/ip4/0.0.0.0/tcp/0/ws']
@@ -18,7 +19,7 @@ async function startLibp2p() {
             transports: [websockets()],
             connectionEncryption: [noise()],
             streamMuxers: [mplex()],
-            pubsub: window.libp2p.gossipsub(),
+            pubsub: gossipsub(), // Initialize pubsub correctly
             peerDiscovery: [
                 bootstrap({
                     list: [
@@ -37,22 +38,32 @@ async function startLibp2p() {
         });
 
         await node.start();
-        console.log('Libp2p node started:', node.peerId.toString());
-        
-        // Enable UI elements after initialization
-		document.getElementById('joinBtn').disabled = false;
+        console.log('Node started with ID:', node.peerId.toString());
+
+        // Initialize pubsub event listeners AFTER node starts
+        node.pubsub.addEventListener('message', (evt) => {
+            if (evt.detail.topic !== roomTopic) return;
+            try {
+                const msg = JSON.parse(new TextDecoder().decode(evt.detail.data));
+                displayMessage(`${msg.sender}: ${msg.text}`, false);
+            } catch (error) {
+                console.error('Message parse error:', error);
+            }
+        });
+
+        // Enable UI components
         document.getElementById('sendBtn').disabled = false;
-        document.getElementById('status').innerHTML = 
-            `🟢 Connected as ${username}`;
-        
-        // Initialize default room
+        document.getElementById('joinBtn').disabled = false;
+        document.getElementById('status').innerHTML = `🟢 Connected as ${username}`;
+
+        // Set default room
         const roomInput = document.getElementById('roomInput');
         roomInput.value = roomInput.value || `room-${Math.random().toString(36).slice(2, 8)}`;
         joinRoom();
 
     } catch (error) {
         console.error('Libp2p initialization failed:', error);
-        document.getElementById('status').innerHTML = '🔴 Connection Failed';
+        document.getElementById('status').innerHTML = '🔴 Initialization Failed';
     }
 }
 
