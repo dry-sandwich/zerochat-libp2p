@@ -1,16 +1,14 @@
-let node;
-let roomTopic;
-let username = `User${Math.floor(Math.random() * 1000)}`;
-
 async function startLibp2p() {
     try {
+        // Ensure all dependencies are properly imported
         const { createLibp2p } = window.libp2p;
         const { noise } = window.Noise;
         const { mplex } = window.Mplex;
-        const websockets = window.WebSockets;
+        const { websockets } = window.WebSockets;
         const { bootstrap } = window.Bootstrap;
         const { gossipsub } = window.GossipSub;
 
+        // Create libp2p node
         node = await createLibp2p({
             addresses: {
                 listen: ['/ip4/0.0.0.0/tcp/0/ws']
@@ -39,7 +37,7 @@ async function startLibp2p() {
         await node.start();
         console.log('Node started with ID:', node.peerId.toString());
 
-        // Single pubsub event listener
+        // Pubsub event listener
         node.pubsub.addEventListener('message', (evt) => {
             if (evt.detail.topic !== roomTopic) return;
             try {
