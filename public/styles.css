@@ -38,13 +38,23 @@ button:hover {
     padding: 10px;
     background: #fafafa;
     border-radius: 5px;
+	display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#status {
+    margin: 10px 0;
+    font-weight: bold;
+    color: #666;
 }
 
 .message {
-    padding: 10px;
     margin: 5px;
-    border-radius: 5px;
-    max-width: 70%;
+	padding: 10px;
+    border-radius: 15px;
+    max-width: 80%;
+    word-break: break-word;
 }
 
 .local {
@@ -52,12 +62,15 @@ button:hover {
     color: white;
     text-align: right;
     float: right;
+	align-self: flex-end;
 }
 
 .remote {
     background: #e0e0e0;
     text-align: left;
     float: left;
+    align-self: flex-start;
+	
 }
 
 .clearfix {

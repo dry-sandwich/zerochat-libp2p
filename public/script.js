@@ -1,55 +1,96 @@
+let node;
+let roomTopic;
+let username = `User${Math.floor(Math.random() * 1000)}`;
+
+// Initialize libp2p with proper component imports
 async function startLibp2p() {
-    console.log("[libp2p] Initializing...");
+    try {
+        const { createLibp2p } = window.libp2p;
+        const { noise } = window.Noise;
+        const { mplex } = window.Mplex;
+        const { websockets } = window.WebSockets;
+        const { bootstrap } = window.Bootstrap;
 
-    const { createLibp2p } = window.libp2p;
-    const { WebSockets } = window.libp2pWebsockets;
-    const { Noise } = window.libp2pNoise;
-    const { Mplex } = window.libp2pMplex;
-    const { GossipSub } = window.libp2pGossipsub;
+        node = await createLibp2p({
+            addresses: {
+                listen: ['/ip4/0.0.0.0/tcp/0/ws']
+            },
+            transports: [websockets()],
+            connectionEncryption: [noise()],
+            streamMuxers: [mplex()],
+            pubsub: window.libp2p.gossipsub(),
+            peerDiscovery: [
+                bootstrap({
+                    list: [
+                        '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
+                        '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa'
+                    ]
+                })
+            ],
+            relay: {
+                enabled: true,
+                hop: {
+                    enabled: true,
+                    active: true
+                }
+            }
+        });
 
-    window.node = await createLibp2p({
-        addresses: {
-            listen: ["/dns4/your-cloudflare-relay.workers.dev/tcp/443/wss"]
-        },
-        transports: [WebSockets()],
-        connectionEncryption: [Noise()],
-        streamMuxers: [Mplex()],
-        pubsub: GossipSub()
-    });
+        await node.start();
+        console.log('Libp2p node started:', node.peerId.toString());
+        
+        // Enable UI elements after initialization
+		document.getElementById('joinBtn').disabled = false;
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('status').innerHTML = 
+            `🟢 Connected as ${username}`;
+        
+        // Initialize default room
+        const roomInput = document.getElementById('roomInput');
+        roomInput.value = roomInput.value || `room-${Math.random().toString(36).slice(2, 8)}`;
+        joinRoom();
 
-    await window.node.start();
-    console.log(`[libp2p] Node started with ID: ${window.node.peerId.toString()}`);
-
-    window.node.pubsub.subscribe("p2p-chat-room", (message) => {
-        const msg = new TextDecoder().decode(message.data);
-        displayMessage(msg, false);
-    });
-
-    window.node.addEventListener('peer:connect', (evt) => {
-        console.log(`[libp2p] Connected to peer: ${evt.detail}`);
-    });
-
-    document.getElementById("sendBtn").disabled = false;
+    } catch (error) {
+        console.error('Libp2p initialization failed:', error);
+        document.getElementById('status').innerHTML = '🔴 Connection Failed';
+    }
 }
 
 function joinRoom() {
-    console.log(`[libp2p] Joining room: p2p-chat-room`);
-    window.node.pubsub.subscribe("p2p-chat-room");
+    if (!node) {
+        alert('Libp2p node not initialized yet!');
+        return;
+    }
+
+    const newRoom = document.getElementById('roomInput').value;
+    if (!newRoom) return alert('Please enter a room name!');
+
+    try {
+        if (roomTopic) {
+            node.pubsub.unsubscribe(roomTopic);
+        }
+        
+        roomTopic = newRoom;
+        node.pubsub.subscribe(roomTopic);
+        
+        document.getElementById('messages').innerHTML = '';
+        document.getElementById('status').innerHTML = 
+            `🟢 Connected to ${roomTopic} as ${username}`;
+            
+    } catch (error) {
+        console.error('Room join error:', error);
+        alert('Failed to join room!');
+    }
 }
 
-function sendMessage() {
-    const messageInput = document.getElementById("messageInput").value;
-    window.node.pubsub.publish("p2p-chat-room", new TextEncoder().encode(messageInput));
-    displayMessage(messageInput, true);
-}
-
-function displayMessage(text, isLocal) {
-    const div = document.createElement("div");
-    div.className = "message " + (isLocal ? "local" : "remote");
-    div.textContent = text;
-    document.getElementById("messages").appendChild(div);
-}
-
-document.addEventListener("DOMContentLoaded", async () => {
-    await startLibp2p();
+// Update event listener initialization
+node.pubsub.addEventListener('message', (evt) => {
+    if (evt.detail.topic !== roomTopic) return;
+    const msgData = new TextDecoder().decode(evt.detail.data);
+    try {
+        const msg = JSON.parse(msgData);
+        displayMessage(`${msg.sender}: ${msg.text}`, false);
+    } catch (error) {
+        console.error('Failed to parse message:', error);
+    }
 });

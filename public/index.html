@@ -11,7 +11,7 @@
 <div class="container">
     <h2>Zero Chat <h5>(by DJ)</h5></h2>
     <input type="text" id="roomInput" placeholder="Enter Room Name">
-    <button onclick="joinRoom()">Join Room</button>
+	<button onclick="joinRoom()" id="joinBtn" disabled>Join Room</button>
     <p id="status">🔴 Disconnected</p>
 
     <div class="message-container" id="messages"></div>
@@ -19,13 +19,12 @@
     <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
 </div>
 
-<!-- Load libp2p core and required modules separately -->
-<script src="https://cdn.jsdelivr.net/npm/@libp2p/core/dist/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@libp2p/websockets/dist/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@libp2p/noise/dist/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@libp2p/mplex/dist/index.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@libp2p/gossipsub/dist/index.min.js"></script>
-
+<!-- Load libp2p from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/libp2p@0.45.7/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@libp2p/websockets@8.0.0/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@libp2p/mplex@8.0.0/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@chainsafe/libp2p-noise@16.0.0/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@libp2p/bootstrap@8.0.0/dist/index.min.js"></script>
 <script src="script.js"></script>
 
 </body>
