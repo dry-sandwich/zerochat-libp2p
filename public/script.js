@@ -11,7 +11,6 @@ async function startLibp2p() {
         const { bootstrap } = window.Bootstrap;
         const { gossipsub } = window.GossipSub;
 
-        // Create libp2p node with proper pubsub configuration
         node = await createLibp2p({
             addresses: {
                 listen: ['/ip4/0.0.0.0/tcp/0/ws']
@@ -19,7 +18,7 @@ async function startLibp2p() {
             transports: [websockets()],
             connectionEncryption: [noise()],
             streamMuxers: [mplex()],
-            pubsub: gossipsub(), // Initialize pubsub correctly
+            pubsub: gossipsub(),
             peerDiscovery: [
                 bootstrap({
                     list: [
@@ -40,7 +39,7 @@ async function startLibp2p() {
         await node.start();
         console.log('Node started with ID:', node.peerId.toString());
 
-        // Initialize pubsub event listeners AFTER node starts
+        // Single pubsub event listener
         node.pubsub.addEventListener('message', (evt) => {
             if (evt.detail.topic !== roomTopic) return;
             try {
@@ -51,7 +50,7 @@ async function startLibp2p() {
             }
         });
 
-        // Enable UI components
+        // Enable UI
         document.getElementById('sendBtn').disabled = false;
         document.getElementById('joinBtn').disabled = false;
         document.getElementById('status').innerHTML = `🟢 Connected as ${username}`;
@@ -68,7 +67,7 @@ async function startLibp2p() {
 }
 
 function joinRoom() {
-    if (!node) {
+    if (!node?.pubsub) {
         alert('Libp2p node not initialized yet!');
         return;
     }
@@ -94,14 +93,28 @@ function joinRoom() {
     }
 }
 
-// Update event listener initialization
-node.pubsub.addEventListener('message', (evt) => {
-    if (evt.detail.topic !== roomTopic) return;
-    const msgData = new TextDecoder().decode(evt.detail.data);
-    try {
-        const msg = JSON.parse(msgData);
-        displayMessage(`${msg.sender}: ${msg.text}`, false);
-    } catch (error) {
-        console.error('Failed to parse message:', error);
-    }
-});
+function sendMessage() {
+    const messageInput = document.getElementById('messageInput');
+    const message = {
+        sender: username,
+        text: messageInput.value,
+        timestamp: Date.now()
+    };
+    
+    node.pubsub.publish(
+        roomTopic,
+        new TextEncoder().encode(JSON.stringify(message))
+    );
+    displayMessage(`You: ${message.text}`, true);
+    messageInput.value = '';
+}
+
+function displayMessage(text, isLocal) {
+    const div = document.createElement("div");
+    div.className = "message " + (isLocal ? "local" : "remote");
+    div.textContent = text;
+    document.getElementById("messages").appendChild(div);
+}
+
+// Initialize the app
+document.addEventListener("DOMContentLoaded", startLibp2p);
