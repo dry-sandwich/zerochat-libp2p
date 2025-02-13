@@ -2,17 +2,15 @@ async function startLibp2p() {
     try {
         // Ensure all dependencies are properly imported
         const { createLibp2p } = window.libp2p;
-        const { noise } = window.Noise;
-        const { mplex } = window.Mplex;
         const { websockets } = window.WebSockets;
+        const { mplex } = window.Mplex;
+        const { noise } = window.Noise;
         const { bootstrap } = window.Bootstrap;
         const { gossipsub } = window.GossipSub;
 
         // Create libp2p node
         node = await createLibp2p({
-            addresses: {
-                listen: ['/ip4/0.0.0.0/tcp/0/ws']
-            },
+            addresses: { listen: ['/ip4/0.0.0.0/tcp/0/ws'] },
             transports: [websockets()],
             connectionEncryption: [noise()],
             streamMuxers: [mplex()],
@@ -25,13 +23,7 @@ async function startLibp2p() {
                     ]
                 })
             ],
-            relay: {
-                enabled: true,
-                hop: {
-                    enabled: true,
-                    active: true
-                }
-            }
+             relay: { enabled: true, hop: { enabled: true, active: true } }
         });
 
         await node.start();
